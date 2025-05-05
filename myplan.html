@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Study Overlay</title>
+  <style>
+    body { margin: 0; padding: 10px; font-family: sans-serif; color: #333; background: transparent; }
+    .schedule { width: 250px; }
+    .schedule h2 { margin-top: 0; font-size: 16px; }
+    .slot { display: flex; justify-content: space-between; padding: 4px; }
+    .slot.current { background: rgba(200,230,255,0.5); }
+    .timer, .dday { margin-top: 10px; font-size: 14px; }
+    .timer .count { font-size: 24px; }
+  </style>
+</head>
+<body>
+  <div class="schedule">
+    <h2>Today Plan</h2>
+    <div id="slots"></div>
+    <div class="timer">
+      <div>Mode: <span id="mode"></span></div>
+      <div class="count" id="countdown"></div>
+      <div>Cycle <span id="cycle"></span>/16</div>
+    </div>
+    <div class="dday" id="dday"></div>
+  </div>
+
+  <script>
+    const slots = [
+      '08:00-08:50','09:00-09:50','10:00-10:50','11:00-11:50',
+      '12:00-12:50','13:00-13:50','14:00-14:50','15:00-15:50',
+      '16:00-16:50','17:00-17:50','18:00-18:50','19:00-19:50',
+      '20:00-20:50','21:00-21:50','22:00-22:50','23:00-23:50'
+    ];
+    const targetDate = new Date('2025-06-01T00:00:00');
+
+    function updateSchedule() {
+      const now = new Date();
+      const container = document.getElementById('slots');
+      container.innerHTML = '';
+      slots.forEach((range,i) => {
+        const [start,end] = range.split('-');
+        const s = new Date(now.toDateString() + ' ' + start);
+        const e = new Date(now.toDateString() + ' ' + end);
+        const div = document.createElement('div');
+        div.className = 'slot' + (now>=s && now<e ? ' current' : '');
+        div.textContent = `${i+1}. ${range}`;
+        container.appendChild(div);
+      });
+    }
+
+    let startTime = Date.now();
+    function updateTimer() {
+      const cycleLen = 60*60*1000; // 60min
+      const work = 50*60*1000, rest=10*60*1000;
+      const elapsed = (Date.now()-startTime) % cycleLen;
+      const cycleNo = Math.floor((Date.now()-startTime)/cycleLen)%16 + 1;
+      const mode = elapsed<work ? 'Work' : 'Break';
+      const remain = mode==='Work' ? work-elapsed : cycleLen-elapsed;
+      const m = Math.floor(remain/60000), s = Math.floor((remain%60000)/1000);
+      document.getElementById('mode').textContent = mode;
+      document.getElementById('countdown').textContent = `${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`;
+      document.getElementById('cycle').textContent = cycleNo;
+    }
+
+    function updateDday() {
+      const now = new Date();
+      const diff = targetDate - now;
+      const days = Math.ceil(diff/86400000);
+      document.getElementById('dday').textContent = `D-${days}`;
+    }
+
+    function tick() {
+      updateSchedule(); updateTimer(); updateDday();
+    }
+    setInterval(tick,1000);
+    tick();
+  </script>
+</body>
+</html>
